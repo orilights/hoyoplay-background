@@ -1,0 +1,30 @@
+{
+  "name": "hoyoplay-background",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lintf": "eslint . --fix"
+  },
+  "dependencies": {
+    "photoswipe": "^5.4.4",
+    "vue": "^3.5.21"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^5.3.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^22.13.11",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^9.35.0",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "unplugin-auto-import": "^20.1.0",
+    "vite": "^7.1.5",
+    "vue-tsc": "^3.0.7"
+  }
+}
