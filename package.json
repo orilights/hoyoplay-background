@@ -11,6 +11,7 @@
     "lintf": "eslint . --fix"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^5.90.2",
     "photoswipe": "^5.4.4",
     "vue": "^3.5.21"
   },
