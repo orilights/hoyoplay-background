@@ -80,7 +80,7 @@ const { data: bgData, isLoading, isError, error } = useQuery({
       throw err
     }
   },
-  staleTime: 1000 * 60 * 5,
+  staleTime: Infinity,
 })
 
 function openUrl(url: string) {
@@ -186,7 +186,7 @@ onMounted(() => {
     </div>
 
     <div id="gallery">
-      <div v-for="item in bgData" :key="item.groupName">
+      <div v-for="item in bgData" :key="`${currentSource}-${item.groupName}`">
         <h2 class="text-2xl font-bold my-4">
           {{ item.groupName }}
         </h2>
