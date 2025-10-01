@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import PhotoSwipeLightbox from 'photoswipe/lightbox'
+import ThumbnailCard from '@/components/ThumbnailCard.vue'
 import 'photoswipe/style.css'
 
 interface BackgroundUrlByGroup {
   groupName: string
   urls: string[]
-}
-
-interface ImageLoadState {
-  [key: string]: boolean
 }
 
 let lightbox: PhotoSwipeLightbox | null = null
@@ -29,7 +26,6 @@ const sources = [
 
 const currentSource = ref(0)
 const usingFallback = ref(false)
-const imageLoadStates = ref<ImageLoadState>({})
 
 async function fetchBackgroundData(url: string, useFallback = false): Promise<BackgroundUrlByGroup[]> {
   const baseUrl = useFallback ? apiFallback : apiBase
@@ -67,7 +63,6 @@ const { data: bgData, isLoading, isError, error } = useQuery({
   queryKey: computed(() => ['backgrounds', currentSource.value]),
   queryFn: async () => {
     usingFallback.value = false
-    imageLoadStates.value = {}
     try {
       return await fetchBackgroundData(sources[currentSource.value]!.url, false)
     }
@@ -87,19 +82,11 @@ function openUrl(url: string) {
   window.open(url, '_blank')
 }
 
-function handleImageLoad(url: string) {
-  imageLoadStates.value[url] = true
-}
-
-function isImageLoaded(url: string): boolean {
-  return imageLoadStates.value[url] || false
-}
-
 onMounted(() => {
   if (!lightbox) {
     lightbox = new PhotoSwipeLightbox({
       gallery: '#gallery',
-      children: 'a',
+      children: 'a.image',
       pswpModule: () => import('photoswipe'),
 
       arrowPrev: true,
@@ -191,32 +178,11 @@ onMounted(() => {
           {{ item.groupName }}
         </h2>
         <div class="flex gap-4 flex-wrap">
-          <a
-            v-for="url, index in item.urls" :key="index"
-            class="relative w-full min-w-[320px] sm:w-[320px] min-h-[180px] text-xs overflow-hidden border border-gray-300 rounded-lg bg-gray-100"
-            :href="url"
-            :data-pswp-width="2560"
-            :data-pswp-height="1440"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <div
-              v-if="!isImageLoaded(url)"
-              class="absolute inset-0 flex items-center justify-center bg-gray-100"
-            >
-              <div class="flex flex-col items-center gap-2">
-                <div class="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                <span class="text-xs text-gray-500">加载中...</span>
-              </div>
-            </div>
-            <img
-              :src="`${url}?x-oss-process=image/resize,h_320`"
-              class="w-full pointer-events-none transition-opacity duration-300"
-              :class="isImageLoaded(url) ? 'opacity-100' : 'opacity-0'"
-              loading="lazy"
-              @load="handleImageLoad(url)"
-            >
-          </a>
+          <ThumbnailCard
+            v-for="url, index in item.urls"
+            :key="index"
+            :url="url"
+          />
         </div>
       </div>
     </div>
