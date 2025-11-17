@@ -4,9 +4,28 @@ import PhotoSwipeLightbox from 'photoswipe/lightbox'
 import ThumbnailCard from '@/components/ThumbnailCard.vue'
 import 'photoswipe/style.css'
 
+enum BackgroundType {
+  Image = 'image',
+  Video = 'video',
+}
+
+export interface BackgroundData {
+  type: BackgroundType
+  url: string
+  cover_url?: string
+  metadata: {
+    format: string
+    width: number
+    height: number
+    mode?: string
+    size?: number
+  }
+  time: string
+}
+
 interface BackgroundUrlByGroup {
   groupName: string
-  urls: string[]
+  list: BackgroundData[]
 }
 
 let lightbox: PhotoSwipeLightbox | null = null
@@ -35,28 +54,28 @@ async function fetchBackgroundData(url: string, useFallback = false): Promise<Ba
     throw new Error(`HTTP error! status: ${response.status}`)
   }
 
-  const data = await response.json()
+  const data = (await response.json() as BackgroundData[]).reverse()
   const arr: BackgroundUrlByGroup[] = []
-  const tempObj: Record<string, string[]> = {}
+  const tempObj: Record<string, BackgroundData[]> = {}
 
-  Object.keys(data).forEach((date) => {
-    const year = date.slice(0, 4)
-    const month = date.slice(4, 6)
+  data.forEach((item) => {
+    const year = item.time.slice(0, 4)
+    const month = item.time.slice(4, 6)
     const groupName = `${year}-${month}`
     if (!tempObj[groupName]) {
       tempObj[groupName] = []
     }
-    tempObj[groupName].push(data[date])
+    tempObj[groupName].push(item)
   })
 
   for (const groupName in tempObj) {
     arr.push({
       groupName,
-      urls: tempObj[groupName]!.reverse().flat(),
+      list: tempObj[groupName]!,
     })
   }
 
-  return arr.reverse()
+  return arr
 }
 
 const { data: bgData, isLoading, isError, error } = useQuery({
@@ -173,15 +192,15 @@ onMounted(() => {
     </div>
 
     <div id="gallery">
-      <div v-for="item in bgData" :key="`${currentSource}-${item.groupName}`">
+      <div v-for="group in bgData" :key="`${currentSource}-${group.groupName}`">
         <h2 class="text-2xl font-bold my-4">
-          {{ item.groupName }}
+          {{ group.groupName }}
         </h2>
         <div class="flex gap-4 flex-wrap">
           <ThumbnailCard
-            v-for="url, index in item.urls"
+            v-for="item, index in group.list"
             :key="index"
-            :url="url"
+            :data="item"
           />
         </div>
       </div>

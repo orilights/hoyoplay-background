@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { BackgroundData } from '@/App.vue'
+
 interface Props {
-  url: string
+  data: BackgroundData
 }
 
 const props = defineProps<Props>()
@@ -9,26 +11,26 @@ const isLoaded = ref(false)
 const isHovered = ref(false)
 const videoRef = ref<HTMLVideoElement>()
 
-const isVideo = computed(() => props.url.startsWith('video'))
+const isVideo = computed(() => props.data.type === 'video')
 
 const videoUrl = computed(() => {
   if (!isVideo.value)
     return ''
-  return props.url.split('|')[1]
+  return props.data.url
 })
 
-const coverUrl = computed(() => {
+const imageUrl = computed(() => {
   if (!isVideo.value)
-    return props.url
-  return props.url.split('|')[2]
+    return props.data.url
+  return props.data.cover_url
 })
 
 const thumbnailUrl = computed(() => {
-  return `${coverUrl.value}?x-oss-process=image/resize,h_320`
+  return `${imageUrl.value}?x-oss-process=image/resize,h_320`
 })
 
 const targetUrl = computed(() => {
-  return isVideo.value ? videoUrl.value : props.url
+  return isVideo.value ? videoUrl.value : props.data.url
 })
 
 function handleImageLoad() {
@@ -56,6 +58,15 @@ function handleMouseLeave() {
   isHovered.value = false
   videoRef.value.pause()
   videoRef.value.currentTime = 0
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024)
+    return `${bytes} B`
+  else if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toFixed(2)} KB`
+  else
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 </script>
 
@@ -106,24 +117,41 @@ function handleMouseLeave() {
       preload="metadata"
     />
 
-    <!-- 视频标识 -->
+    <!-- 信息标签 -->
     <div
-      v-if="isVideo"
-      class="absolute bottom-2 left-2 bg-black bg-opacity-70 rounded-full p-1.5 transition-opacity duration-300"
+      class="absolute bottom-2 left-2 flex gap-1 text-white text-[10px] leading-[12px] transition-opacity duration-300"
       :class="isLoaded ? 'opacity-100' : 'opacity-0'"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        class="size-4 text-white"
+      <div
+        v-if="isVideo"
+        class=" bg-black/60 rounded-lg p-1 "
       >
-        <path
-          fill-rule="evenodd"
-          d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-          clip-rule="evenodd"
-        />
-      </svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="size-3 text-white"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </div>
+
+      <div class="bg-black/60 rounded-lg p-1">
+        {{ data.metadata.format }}<template v-if="data.metadata.mode">-{{ data.metadata.mode }}</template>
+      </div>
+
+      <div v-if="data.metadata.width && data.metadata.height" class="bg-black/60 rounded-lg p-1">
+        {{ `${data.metadata.width}×${data.metadata.height}` }}
+      </div>
+
+      <div v-if="data.metadata.size" class="bg-black/60 rounded-lg p-1">
+        {{ formatBytes(data.metadata.size) }}
+      </div>
+
     </div>
   </a>
 </template>
