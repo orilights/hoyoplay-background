@@ -42,6 +42,14 @@ const sources = [
     title: '启动器背景',
     url: '/hyp_cn_game_basic_info.json',
   },
+  {
+    title: '游戏背景(HoYoPlay)',
+    url: '/hyp_os_games.json',
+  },
+  {
+    title: '启动器背景(HoYoPlay)',
+    url: '/hyp_os_game_basic_info.json',
+  },
 ]
 
 const currentSource = ref(0)
@@ -143,7 +151,7 @@ onMounted(() => {
 
 <template>
   <div class="p-4 sm:p-8">
-    <div class="flex gap-4 mb-4">
+    <div class="flex gap-x-4 gap-y-2 flex-wrap mb-4">
       <button
         v-for="item, index in sources" :key="index"
         class="px-4 py-2 border border-gray-300 rounded-lg transition-colors"

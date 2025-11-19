@@ -26,6 +26,8 @@ const imageUrl = computed(() => {
 })
 
 const thumbnailUrl = computed(() => {
+  if (imageUrl.value?.startsWith('https://launcher-webstatic.hoyoverse.com'))
+    return `${import.meta.env.VITE_API_THUMBNAIL}${imageUrl.value}`
   return `${imageUrl.value}?x-oss-process=image/resize,h_320`
 })
 
