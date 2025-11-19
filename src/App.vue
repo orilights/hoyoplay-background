@@ -19,6 +19,7 @@ export interface BackgroundData {
     height: number
     mode?: string
     size?: number
+    framerate?: number
   }
   time: string
 }
