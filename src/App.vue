@@ -11,6 +11,7 @@ enum BackgroundType {
 
 export interface BackgroundData {
   type: BackgroundType
+  category: string
   url: string
   cover_url?: string
   metadata: {
@@ -52,42 +53,30 @@ const sources = [
   },
 ]
 
+const categories = [
+  {
+    name: '崩坏3',
+    key: 'bh3',
+  },
+  {
+    name: '原神',
+    key: 'hk4e',
+  },
+  {
+    name: '崩坏：星穹铁道',
+    key: 'hkrpg',
+  },
+  {
+    name: '绝区零',
+    key: 'nap',
+  },
+]
+
+const selectedCategory = ref<string | null>(null)
 const currentSource = ref(0)
 const usingFallback = ref(false)
 
-async function fetchBackgroundData(url: string, useFallback = false): Promise<BackgroundUrlByGroup[]> {
-  const baseUrl = useFallback ? apiFallback : apiBase
-  const response = await fetch(baseUrl + url)
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-
-  const data = (await response.json() as BackgroundData[]).reverse()
-  const arr: BackgroundUrlByGroup[] = []
-  const tempObj: Record<string, BackgroundData[]> = {}
-
-  data.forEach((item) => {
-    const year = item.time.slice(0, 4)
-    const month = item.time.slice(4, 6)
-    const groupName = `${year}-${month}`
-    if (!tempObj[groupName]) {
-      tempObj[groupName] = []
-    }
-    tempObj[groupName].push(item)
-  })
-
-  for (const groupName in tempObj) {
-    arr.push({
-      groupName,
-      list: tempObj[groupName]!,
-    })
-  }
-
-  return arr
-}
-
-const { data: bgData, isLoading, isError, error } = useQuery({
+const { data: backgroundList, isLoading, isError, error } = useQuery({
   queryKey: computed(() => ['backgrounds', currentSource.value]),
   queryFn: async () => {
     usingFallback.value = false
@@ -105,6 +94,62 @@ const { data: bgData, isLoading, isError, error } = useQuery({
   },
   staleTime: Infinity,
 })
+
+const backgroundGroups = computed(() => {
+  if (!backgroundList.value)
+    return []
+
+  return groupByDate(backgroundList.value.filter((item) => {
+    if (selectedCategory.value)
+      return item.category.startsWith(selectedCategory.value)
+
+    return true
+  }))
+})
+
+async function fetchBackgroundData(url: string, useFallback = false): Promise<BackgroundData[]> {
+  const baseUrl = useFallback ? apiFallback : apiBase
+  const response = await fetch(baseUrl + url)
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  return (await response.json() as BackgroundData[]).reverse()
+}
+
+function groupByDate(data: BackgroundData[]): BackgroundUrlByGroup[] {
+  const groups: BackgroundUrlByGroup[] = []
+  const tempObj: Record<string, BackgroundData[]> = {}
+
+  data.forEach((item) => {
+    const year = item.time.slice(0, 4)
+    const month = item.time.slice(4, 6)
+    const groupName = `${year}-${month}`
+    if (!tempObj[groupName]) {
+      tempObj[groupName] = []
+    }
+    tempObj[groupName].push(item)
+  })
+
+  for (const groupName in tempObj) {
+    groups.push({
+      groupName,
+      list: tempObj[groupName]!,
+    })
+  }
+
+  return groups
+}
+
+function handleCategoryClick(categoryKey: string) {
+  if (selectedCategory.value) {
+    selectedCategory.value = null
+  }
+  else {
+    selectedCategory.value = categoryKey
+  }
+}
 
 function openUrl(url: string) {
   window.open(url, '_blank')
@@ -156,7 +201,7 @@ onMounted(() => {
         v-for="item, index in sources" :key="index"
         class="px-4 py-2 border border-gray-300 rounded-lg transition-colors"
         :class="{
-          'bg-slate-300': currentSource === index,
+          'bg-gray-300': currentSource === index,
           'hover:bg-gray-100 cursor-pointer': currentSource !== index,
         }"
         @click="currentSource = index"
@@ -170,6 +215,28 @@ onMounted(() => {
       >
         Github
       </button>
+    </div>
+
+    <div class="flex gap-2">
+      <div
+        v-for="category in categories" v-show="!selectedCategory || selectedCategory === category.key"
+        :key="category.key"
+        class="flex items-center gap-2 p-2 active:scale-95 rounded-lg transition-all cursor-pointer"
+        :class="{
+          'bg-gray-200': selectedCategory === category.key,
+          'hover:bg-gray-100': selectedCategory !== category.key,
+        }"
+        @click="handleCategoryClick(category.key)"
+      >
+        <img class="size-6" :src="`/images/${category.key}.png`" :alt="category.name">
+        {{ category.name }}
+        <svg
+          v-if="selectedCategory === category.key"
+          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </div>
     </div>
 
     <div
@@ -201,7 +268,7 @@ onMounted(() => {
     </div>
 
     <div id="gallery">
-      <div v-for="group in bgData" :key="`${currentSource}-${group.groupName}`">
+      <div v-for="group in backgroundGroups" :key="`${currentSource}-${group.groupName}`">
         <h2 class="text-2xl font-bold my-4">
           {{ group.groupName }}
         </h2>

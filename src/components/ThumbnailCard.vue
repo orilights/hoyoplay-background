@@ -26,8 +26,10 @@ const imageUrl = computed(() => {
 })
 
 const thumbnailUrl = computed(() => {
+  // launcher-webstatic.hoyoverse.com 域名源站非 OSS，无法使用图片处理参数，使用自有 API 生成缩略图
   if (imageUrl.value?.startsWith('https://launcher-webstatic.hoyoverse.com'))
     return `${import.meta.env.VITE_API_THUMBNAIL}${imageUrl.value}`
+
   return `${imageUrl.value}?x-oss-process=image/resize,h_320`
 })
 
