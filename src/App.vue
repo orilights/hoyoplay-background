@@ -74,6 +74,14 @@ const categories = [
     name: '绝区零',
     key: 'nap',
   },
+  {
+    name: '星布谷地',
+    key: 'hyg',
+  },
+  {
+    name: '崩坏：因缘精灵',
+    key: 'abc',
+  },
 ]
 
 const selectedCategory = ref<string | null>(null)
